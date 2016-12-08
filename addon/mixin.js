@@ -1,7 +1,6 @@
 import Ember from 'ember';
 import Errors from 'ember-validations/errors';
 import Base from 'ember-validations/validators/base';
-import getOwner from 'ember-getowner-polyfill';
 
 const {
   A: emberArray,
@@ -17,6 +16,18 @@ const {
   set,
   warn
 } = Ember;
+
+let {
+  getOwner
+} = Ember;
+
+if (!getOwner) {
+  try {
+    getOwner = require('ember-getowner-polyfill')['default'];
+  } catch(e) {
+    warn('Ember.getOwner API unsupported. To resolve this: `ember install ember-getowner-polyfill`');
+  }
+}
 
 const setValidityMixin = Mixin.create({
   isValid: computed('validators.@each.isValid', function() {
