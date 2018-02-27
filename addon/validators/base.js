@@ -4,13 +4,16 @@ const {
   A: emberArray,
   Object: EmberObject,
   RSVP: { reject, resolve },
-  computed: { empty, not },
+  computed,
+  computed: { not },
   get,
   on,
   set
 } = Ember;
 
 export default EmberObject.extend({
+  asyncPromiseCount: 0,
+
   init() {
     set(this, 'errors', emberArray());
     this.dependentValidationKeys = emberArray();
@@ -55,7 +58,9 @@ export default EmberObject.extend({
     }
   },
 
-  isValid: empty('errors.[]'),
+  isValid: computed('errors.[]', 'asyncPromiseCount', function() {
+    return !get(this, 'errors.length') && (get(this, 'asyncPromiseCount') === 0);
+  }),
   isInvalid: not('isValid'),
 
   validate() {
@@ -73,13 +78,16 @@ export default EmberObject.extend({
   _validate: on('init', function() {
     this.errors.clear();
     if (this.canValidate()) {
-      this.call();
+      let ret = this.call();
+      if (ret && ret.then) {
+        this.incrementProperty('asyncPromiseCount', 1);
+        return ret.finally(() => {
+          this.incrementProperty('asyncPromiseCount', -1);
+          resolve(!!get(this, 'isValid'));
+        });
+      }
     }
-    if (get(this, 'isValid')) {
-      return resolve(true);
-    } else {
-      return resolve(false);
-    }
+    return resolve(!!get(this, 'isValid'));
   }),
 
   canValidate() {
