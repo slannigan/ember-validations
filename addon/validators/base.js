@@ -76,9 +76,10 @@ export default EmberObject.extend({
     this.errors.clear();
     if (this.canValidate()) {
       let ret = this.call();
-      if (ret && ret.then) {
+      if (ret && ret.catch && ret.finally) {
         this.incrementProperty('asyncPromiseCount', 1);
-        return ret.finally(() => {
+        // Need the empty catch statement to prevent console error about uncaught error
+        return ret.catch(() => {}).finally(() => {
           this.incrementProperty('asyncPromiseCount', -1);
           resolve(!!get(this, 'isValid'));
         });
