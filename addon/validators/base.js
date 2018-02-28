@@ -4,8 +4,7 @@ const {
   A: emberArray,
   Object: EmberObject,
   RSVP: { reject, resolve },
-  computed,
-  computed: { not },
+  computed: { empty, not },
   get,
   on,
   set
@@ -58,9 +57,7 @@ export default EmberObject.extend({
     }
   },
 
-  isValid: computed('errors.[]', 'asyncPromiseCount', function() {
-    return !get(this, 'errors.length') && (get(this, 'asyncPromiseCount') === 0);
-  }),
+  isValid: empty('errors.[]'),
   isInvalid: not('isValid'),
 
   validate() {
